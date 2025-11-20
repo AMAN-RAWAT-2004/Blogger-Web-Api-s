@@ -40,6 +40,11 @@ exports.loginUser = CatchAsync(async (req, res, next) => {
     const user = await User.findOne({
         email
     }).select('+password')
+    
+     if (user.status !== 'approved') {
+        return next(new AppError('Your account is not approved yet', 403));
+    }
+
     if (!user || !(await user.ComparePassword(password, user.password))) return next(new AppError('Invalid Email Password ', 404))
 
     const token = signToken(user._id)
