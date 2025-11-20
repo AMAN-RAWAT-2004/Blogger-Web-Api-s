@@ -35,18 +35,22 @@ exports.loginUser = CatchAsync(async (req, res, next) => {
         email,
         password
     } = req.body;
-    if (!email || !password) return next(new AppError('Required Fields Are Empty', 404))
+    console.log(email)
+    if (!email || !password) {
+        return next(new AppError('Required Fields Are Empty', 404))
+    }
 
     const user = await User.findOne({
         email
     }).select('+password')
-    
-     if (user.status !== 'approved') {
+
+     
+
+    if (!user || !(await user.ComparePassword(password, user.password))) return next(new AppError('Invalid Email or Password ', 404))
+
+        if (user.status !== 'approved') {
         return next(new AppError('Your account is not approved yet', 403));
     }
-
-    if (!user || !(await user.ComparePassword(password, user.password))) return next(new AppError('Invalid Email Password ', 404))
-
     const token = signToken(user._id)
 
     res.status(200).json({
