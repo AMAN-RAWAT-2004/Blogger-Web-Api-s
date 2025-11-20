@@ -5,8 +5,10 @@ const userRoutes=require('./routes/userRoute')
 const blogRoutes=require('./routes/blogRoutes')
 const AuthorRoutes=require('./routes/authorRoute')
 const commentRoute=require('./routes/commentRoute')
+const cors=require('cors')
 const Morgan=require('morgan')
 const App=express()
+App.use(cors());
 App.use(
     Morgan('dev')
 )
