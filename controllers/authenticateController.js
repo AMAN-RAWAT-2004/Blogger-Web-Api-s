@@ -110,3 +110,77 @@ exports.roleApprovelCheck = CatchAsync(async (req, res, next) => {
 
     next()
 })
+
+exports.forgetPassword=CatchAsync(async(req,res,next)=>{
+        const findUser=await User.findOne({email:req.body.email})
+        if(!findUser){
+           return next(new AppError('Cannot Find User by this email',404))
+        }
+        const resetToken=findUser.generateResetToken();
+
+         await findUser.save({
+        validateBeforeSave: false
+    });
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetpassword/${resetToken}`
+    const message = `Forgot Your Password ? Request a new Patch request with Your New Password and Password Confirm :${resetUrl}.\n if you didnot Forgot Your Password Then Ignore this Email!`
+
+    try {
+
+        await sendEmail({
+            email: findUser.email,
+            subject: 'Your Password Reset Token is Valid for 10 Minutes',
+            message
+        })
+        res.status(200).json({
+            status: "sucess",
+            message: "Token Sent to Email"
+        })
+    } catch (err) {
+        findUser.passwordResetToken = undefined;
+        findUser.passwordResetExpires = undefined;
+        await findUser.save({
+            validateBeforeSave: false
+        });
+
+        return next(new AppError('There is an Error in sending the  email', 500))
+
+    }
+
+
+
+
+})
+exports.resetPassword = CatchAsync(async (req, res, next) => {
+
+    
+    const hashToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
+
+    const user = await User.findOne({
+        passwordResetToken: hashToken,
+        passwordResetExpires: {
+            $gt: Date.now()
+        }
+    })
+
+    
+    if (!user) {
+        return next(new AppError('The Token is Invalid or Expired', 400))
+    }
+    user.password = req.body.password;
+    user.confirmPassword = req.body.confirmPassword;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    const token = signToken(user._id)
+    user.password = undefined;
+    res.status(200).json({
+        status: 'sucess',
+        message: 'Login Succesfully',
+        token,
+        data: {
+            user
+        }
+    })
+
+})
