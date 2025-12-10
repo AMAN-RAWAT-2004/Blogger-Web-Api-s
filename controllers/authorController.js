@@ -14,3 +14,16 @@ exports.getAllAuthor=CatchAsync(async(req,res,next)=>{
         }
     })
 })
+
+exports.getAuthour=CatchAsync(async(req,res,next)=>{
+    const getAuthor= await User.findById(req.params.id,{role:'author',status:'approved'}).select('name _id email')
+     if(!getAuthor){
+        return next(new AppError('There is no Any Author ',404))
+    }
+    res.status(200).json({
+        status:'Success',
+        data:{
+            Author:getAuthor
+        }
+    })
+})
