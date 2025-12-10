@@ -1,6 +1,7 @@
 const mongoose=require('mongoose')
 const bcrypt=require('bcrypt')
 const Validator=require('validator')
+const crypto=require('crypto')
 
 const userSchema=new mongoose.Schema({
     name:{
@@ -35,6 +36,7 @@ const userSchema=new mongoose.Schema({
         enum:['reader','admin','author'],
         default:'reader'
     },
+    passwordResetToken: String,
     status:{
         type:String,
         enum:['pending','approved','rejected'],
@@ -44,15 +46,24 @@ const userSchema=new mongoose.Schema({
 },{
     timestamps:false
 })
-userSchema.pre('save',async function(next){
-    this.password=await bcrypt.hash(this.password,12)
-    this.confirmPassword=undefined;
-    next()
-})
+
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next();
+
+    this.password = await bcrypt.hash(this.password, 12);
+    this.confirmPassword = undefined;
+    next();
+});
 userSchema.methods.ComparePassword=async function(currentPassword,actualUserPassword){
 
     return await bcrypt.compare(currentPassword,actualUserPassword)
 
+}
+userSchema.methods.generateResetToken= function(){
+    const resetToken=crypto.randomBytes(32).toString('hex')
+    this.passwordResetToken=crypto.createHash('sha256').update(resetToken).digest('hex')
+    this.passwordResetExpires = Date.now() + 10 * 60 * 1000;
+    return resetToken;
 }
 const User=new mongoose.model('User',userSchema)
 
