@@ -86,3 +86,17 @@ exports.deleteBlogs=CatchAsync(async(req,res,next)=>{
     })
 })
 
+exports.SearchBar=CatchAsync(async(req,res,next)=>{
+    const Search=req.query.q||"";
+    const Blogs=await Blog.find({
+      title: { $regex: Search, $options: "i" }
+    })
+    if(!Blogs){
+        return next(new AppError('There is no Such Blog with that name',404))
+    }
+    res.json({
+      success: true,
+      count: Blogs.length,
+      Blogs
+    });
+})
