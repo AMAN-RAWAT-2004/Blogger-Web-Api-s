@@ -7,8 +7,8 @@ const authController = require('../controllers/authenticateController')
 const blogController = require('./../controllers/blogController')
 Router.post('/createblogs', authController.protect, authController.RestrictTo('author'), blogController.createBlogs)
 Router.route('/').get(blogController.getAllblogs)
+Router.get('/search',blogController.SearchBar)
 Router.route('/:id').delete( authController.protect, authController.RestrictTo('author','admin'),blogController.deleteBlogs).get(authController.protect, authController.RestrictTo('reader'),blogController.getBlogsByAuthourID).patch(authController.protect,authController.RestrictTo('author'),blogController.updateBlogs)
-
 
 
 
