@@ -5,9 +5,8 @@ const sendEmail= async options=>{
     
 
     const transponder=nodemailer.createTransport({
-        host:process.env.EMAIL_HOST,
-        port:process.env.EMAIL_PORT,
-        secure: false, 
+        service:"gmail",
+        secure: true, 
         auth:{
             user:process.env.EMAIL_USERNAME,
             pass:process.env.EMAIL_PASSWORD
@@ -16,7 +15,7 @@ const sendEmail= async options=>{
 
    
     const mailOptions={
-        from:'Aman <ar464163@gmail.com>',
+        from:'Aman <amanrawat464163@gmail.com>',
         to:options.email,
         subject:options.subject,
         text:options.message

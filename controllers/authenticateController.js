@@ -6,6 +6,9 @@ const {
 const CatchAsync = require('../utlis/catchAsync')
 const AppError = require('../utlis/appError')
 const User = require('../models/userModel')
+const sendEmail = require('../utlis/email');
+const crypto=require('crypto')
+
 
 const signToken = id => {
     return jwt.sign({
@@ -123,9 +126,11 @@ exports.forgetPassword=CatchAsync(async(req,res,next)=>{
     });
     const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetpassword/${resetToken}`
     const message = `Forgot Your Password ? Request a new Patch request with Your New Password and Password Confirm :${resetUrl}.\n if you didnot Forgot Your Password Then Ignore this Email!`
+    
+    
 
     try {
-
+        
         await sendEmail({
             email: findUser.email,
             subject: 'Your Password Reset Token is Valid for 10 Minutes',
@@ -135,7 +140,10 @@ exports.forgetPassword=CatchAsync(async(req,res,next)=>{
             status: "sucess",
             message: "Token Sent to Email"
         })
+        
+
     } catch (err) {
+        console.log("EMAIL ERROR →", err);
         findUser.passwordResetToken = undefined;
         findUser.passwordResetExpires = undefined;
         await findUser.save({
@@ -153,10 +161,10 @@ exports.forgetPassword=CatchAsync(async(req,res,next)=>{
 exports.resetPassword = CatchAsync(async (req, res, next) => {
 
     
-    const hashToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex')
 
     const user = await User.findOne({
-        passwordResetToken: hashToken,
+        passwordResetToken: hashedToken,
         passwordResetExpires: {
             $gt: Date.now()
         }
